@@ -1242,6 +1242,9 @@ search box - the end user will not know they are happening.
                     so if a wider filter range is required, first increase the filter size then select the filter range.</p>';
             }
         };
+        if ( !options.default_freetext_fuzzify ) {
+            thehelp += '<p><a href="http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-query-string-query.html#query-string-syntax" target="_blank">Read about the advanced query syntax</a> you can use in the search box.</p>';
+        }
         thehelp += '<p><a class="facetview_learnmore label" href="#">close the help</a></p></div>';
         
         // the facet view object to be appended to the page
