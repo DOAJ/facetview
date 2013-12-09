@@ -49,13 +49,15 @@ jQuery.extend({
         var params = new Object;
         var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
         for ( var i = 0; i < hashes.length; i++ ) {
-            hash = hashes[i].split('=');
+            var hash = hashes[i].split('=');
             if ( hash.length > 1 ) {
-                if ( hash[1].replace(/%22/gi,"")[0] == "[" || hash[1].replace(/%22/gi,"")[0] == "{" ) {
-                    hash[1] = hash[1].replace(/^%22/,"").replace(/%22$/,"");
-                    var newval = JSON.parse(unescape(hash[1].replace(/%22/gi,'"')));
-                } else {
-                    var newval = unescape(hash[1].replace(/%22/gi,'"'));
+                var newval = unescape(hash[1]);
+                if ( newval[0] == "[" || newval[0] == "{" ) {
+                // if it looks like a JSON object in string form...
+                
+                    // remove " (double quotes) at beginning and end of string to make it a valid representation of a JSON object, or the parser will complain
+                    newval = newval.replace(/^"/,"").replace(/"$/,"");
+                    var newval = JSON.parse(newval);
                 }
                 params[hash[0]] = newval;
             }
