@@ -332,6 +332,10 @@ search term. If * or ~ or : are already in the freetext search term, it will be 
 to do a complex search term so no action will be taken. NOTE these changes are not replicated into the freetext 
 search box - the end user will not know they are happening.
 
+hide_inactive_facets
+------------------
+Hide facets which have only 1 or no values. Can be true or false (default).
+
 */
 
 
@@ -439,7 +443,8 @@ search box - the end user will not know they are happening.
             "pushstate": true,
             "linkify": true,
             "default_operator": "OR",
-            "default_freetext_fuzzify": false
+            "default_freetext_fuzzify": false,
+            "hide_inactive_facets": false
         };
 
 
@@ -879,7 +884,9 @@ search box - the end user will not know they are happening.
                 if ( $(this).children().find('.facetview_filtervalue').length > 1 ) {
                     $(this).show();
                 } else {
-                    //$(this).hide();
+                    if (options.hide_inactive_facets) {
+                        $(this).hide();
+                    }
                     $(this).find('.facetview_filtershow').css({'color':'#ccc','font-weight':'normal'}).children('i').hide();
                 };
             });
