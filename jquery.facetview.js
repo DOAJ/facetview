@@ -114,7 +114,7 @@ Options can also be set and retrieved externally via $.fn.facetview.options.
 Query values can also be read from the query parameters of the current page, or provided in
 the "source" option for initial search.
 
-Also, whilst facetview is executing a query, it will "show" any element with the "notify-loading" class.
+Also, whilst facetview is executing a query, it will "show" any element with the "notify_loading" class.
 So that class can be applied to any element on a page that can be used to signify loading is taking place.
 
 Once facetview has executed a query, the querystring used is available under "options.querystring".
