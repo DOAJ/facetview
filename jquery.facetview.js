@@ -307,6 +307,11 @@ post_search_callback
 --------------------
 This can define or reference a function that will be executed any time new search results are retrieved and presented on the page.
 
+post_init_callback
+--------------------
+This can define or reference a function that will be executed after facetview is fully loaded and displayed, but before any searches are executed.
+This is useful for finer customisation of the facetview interface, e.g. inserting a "search results loading" indicator somewhere in facetview itself.
+
 pushstate
 ---------
 Updates the URL string with the current query when the user changes the search terms
@@ -430,6 +435,7 @@ search box - the end user will not know they are happening.
             "result_box_colours":[],
             "fadein":800,
             "post_search_callback": false,
+            "post_init_callback": false,
             "pushstate": true,
             "linkify": true,
             "default_operator": "OR",
@@ -1348,6 +1354,11 @@ search box - the end user will not know they are happening.
                     options.q != "" ? $(options.searchbox_class).last().val(options.q) : "";
                     buildfilters();
                     $(options.searchbox_class).bindWithDelay('keyup',dosearch,options.freetext_submit_delay);
+                }
+
+                // if a post initialisation callback is provided, run it
+                if (typeof options.post_init_callback == 'function') {
+                    options.post_init_callback.call(this);
                 }
 
                 options.source || options.initialsearch ? dosearch() : "";
