@@ -1171,7 +1171,8 @@ Hide facets which have only 1 or no values. Can be true or false (default).
                         console.log(sorting);
                     }
                 } else {
-                    sortobj = {sortchoice: {'order': $('.facetview_order', obj).attr('href')}};
+                    sortobj = {}
+                    sortobj[sortchoice] = {'order': $('.facetview_order', obj).attr('href')};
                     sorting.push(sortobj);
                 }
 
