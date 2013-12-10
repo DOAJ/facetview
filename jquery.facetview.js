@@ -1153,10 +1153,22 @@ search box - the end user will not know they are happening.
             event ? event.preventDefault() : "";
             var sortchoice = $('.facetview_orderby', obj).val();
             if ( sortchoice.length != 0 ) {
-                var sorting = {};
-                var sorton = sortchoice;
-                sorting[sorton] = {'order': $('.facetview_order', obj).attr('href')};
-                options.sort = [sorting];
+                var sorting = [];
+                if (sortchoice.startsWith('[')) {
+                    sort_fields = JSON.parse(sortchoice.replace(/'/g, '"'));
+                    for ( var each = 0; each < sort_fields.length; each++ ) {
+                        sf = sort_fields[each];
+                        sortobj = {}
+                        sortobj[sf] = {'order': $('.facetview_order', obj).attr('href')};
+                        sorting.push(sortobj);
+                        console.log(sorting);
+                    }
+                } else {
+                    sortobj = {sortchoice: {'order': $('.facetview_order', obj).attr('href')}};
+                    sorting.push(sortobj);
+                }
+
+                options.sort = sorting;
             } else {
                 options.sort = [];
             }
@@ -1277,7 +1289,15 @@ search box - the end user will not know they are happening.
                 <option value="">order by</option>';
             for ( var each = 0; each < options.search_sortby.length; each++ ) {
                 var obj = options.search_sortby[each];
-                thefacetview += '<option value="' + obj['field'] + '">' + obj['display'] + '</option>';
+                var sortoption = '';
+                if ($.type(obj['field']) == 'array') {
+                    sortoption = sortoption + '[';
+                    sortoption = sortoption + "'" + obj['field'].join("','") + "'";
+                    sortoption = sortoption + ']';
+                } else {
+                    sortoption = obj['field'];
+                }
+                thefacetview += '<option value="' + sortoption + '">' + obj['display'] + '</option>';
             };
             thefacetview += '</select>';
         } else {
