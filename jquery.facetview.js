@@ -925,8 +925,8 @@ is missing.
                 var records = data["facets"][ facet ];
                 for ( var item in records ) {
                     var append = '<tr class="facetview_filtervalue" style="display:none;"><td><a class="facetview_filterchoice' +
-                        '" rel="' + facet + '" href="' + item + '">' + item +
-                        ' (' + records[item] + ')</a></td></tr>';
+                        '" rel="' + facet + '" href="' + item + '"><span class="facetview_filterchoice_text">' + item + '</span>' +
+                        '<span class="facetview_filterchoice_count"> (' + records[item] + ')</span></a></td></tr>';
                     $('#facetview_' + facetclean, obj).append(append);
                 }
                 if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
