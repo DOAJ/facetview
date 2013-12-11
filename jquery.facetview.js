@@ -336,6 +336,51 @@ hide_inactive_facets
 ------------------
 Hide facets which have only 1 or no values. Can be true or false (default).
 
+results_render_callbacks
+------------------------
+An object defining or referencing functions used to customise rendering
+of search results. When a callback is defined for a certain field,
+facetview will hand off rendering of that field to the callback
+function, passing the full result object of the search result currently
+being rendered.
+
+The callback function should return a string to be displayed between the
+"pre" and the "post" defined for that field in results_display. This
+could be replacing the original field's value, or displaying something
+in case the field is missing instead of skipping the field. "pre" and
+"post" are still displayed for the field, if configured.
+
+Returning anything that evaluates to false will cause the field to be
+skipped entirely from the result, no "pre" or "post" will be displayed.
+   
+Parameter #2 allows the callback function to completely customise what
+value is being displayed for that field, including using values from
+other fields in the process.
+
+It's also possible to define a callback function for a non-existent
+field, e.g. "my_data_has_holes". Using the result_display
+facetview parameter is a good way to customise the appearance of search
+results, but it can't handle cases where the first field of the result
+is missing.
+   
+   For example:
+   results_display: [ [{"pre": "My label: ","field": "field1"}, {"field": "field2"}] ]
+   will not display "My label" in front of your result if "field1" is
+   missing. In this situation, field1 and field2 may or may not be
+   defined, and they may be defined at the same time (so repeating the
+   label in front of field2 won't suffice, as it could then be displayed
+   twice for certain results). results_display is not enough.
+
+   In this situation, you can combine this option with results_display
+   to achieve the desired effect:
+   results_display: [ [{"field": "my_data_has_holes"},{"field": "field1"}, {"field": "field2"}] ],
+   results_render_callbacks: {"my_data_has_holes": my_data_has_holes}
+
+   Then simply define a my_data_has_holes(field, resultobj) function to
+   return "My label" if either field1 or field2 is present in the
+   data (return false otherwise). Facetview will now display the label
+   when appropriate.
+
 */
 
 
@@ -444,7 +489,8 @@ Hide facets which have only 1 or no values. Can be true or false (default).
             "linkify": true,
             "default_operator": "OR",
             "default_freetext_fuzzify": false,
-            "hide_inactive_facets": false
+            "hide_inactive_facets": false,
+            "results_render_callbacks:": {}
         };
 
 
@@ -803,23 +849,28 @@ Hide facets which have only 1 or no values. Can be true or false (default).
                 line = "";
                 for ( var object = 0; object < display[lineitem].length; object++ ) {
                     var thekey = display[lineitem][object]['field'];
-                    parts = thekey.split('.');
-                    // TODO: this should perhaps recurse..
-                    if (parts.length == 1) {
-                        var res = record;
-                    } else if (parts.length == 2) {
-                        var res = record[parts[0]];
-                    } else if (parts.length == 3) {
-                        var res = record[parts[0]][parts[1]];
-                    }
-                    var counter = parts.length - 1;
-                    if (res && res.constructor.toString().indexOf("Array") == -1) {
-                        var thevalue = res[parts[counter]];  // if this is a dict
+                    if (typeof options.results_render_callbacks[thekey] == 'function') {
+                        thevalue = options.results_render_callbacks[thekey].call(this, record);
                     } else {
-                        var thevalue = [];
-                        if ( res !== undefined ) {
-                            for ( var row = 0; row < res.length; row++ ) {
-                                thevalue.push(res[row][parts[counter]]);
+                        // no callback defined for this field, do the usual
+                        parts = thekey.split('.');
+                        // TODO: this should perhaps recurse..
+                        if (parts.length == 1) {
+                            var res = record;
+                        } else if (parts.length == 2) {
+                            var res = record[parts[0]];
+                        } else if (parts.length == 3) {
+                            var res = record[parts[0]][parts[1]];
+                        }
+                        var counter = parts.length - 1;
+                        if (res && res.constructor.toString().indexOf("Array") == -1) {
+                            var thevalue = res[parts[counter]];  // if this is a dict
+                        } else {
+                            var thevalue = [];
+                            if ( res !== undefined ) {
+                                for ( var row = 0; row < res.length; row++ ) {
+                                    thevalue.push(res[row][parts[counter]]);
+                                }
                             }
                         }
                     }
