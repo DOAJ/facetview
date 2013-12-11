@@ -834,8 +834,12 @@ Hide facets which have only 1 or no values. Can be true or false (default).
                         } else {
                             line += thevalue;
                         }
-                        display[lineitem][object]['post'] 
-                            ? line += display[lineitem][object]['post'] : line += ' ';
+
+                        if (display[lineitem][object]['post']) {
+                            line += display[lineitem][object]['post'];
+                        } else if(!display[lineitem][object]['notrailingspace']) {
+                            line += ' ';
+                        }
                     }
                 }
                 if (line) {
