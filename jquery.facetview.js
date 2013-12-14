@@ -745,7 +745,8 @@ is missing.
             newobj += '" rel="' + rel + 
                 '" alt="remove" title="remove"' +
                 ' href="' + href + '">' +
-                href + ' <i class="icon-white icon-remove" style="margin-top:1px;"></i></a>';
+                '<span class="facetview_filterselected_text">' + href + '</span>' + 
+                ' <i class="icon-white icon-remove" style="margin-top:1px;"></i></a>';
 
             if ( $('#facetview_group_' + relclean, obj).length ) {
                 $('#facetview_group_' + relclean, obj).append(newobj);
