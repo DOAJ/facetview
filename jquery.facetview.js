@@ -303,6 +303,10 @@ fadein
 ------
 Define a fade-in delay in milliseconds so that whenever a new list of results is displays, it uses the fade-in effect.
 
+pre_search_callback
+--------------------
+This can define or reference a function that will be executed any time before a search is executed (user clicking on a facet, sorting, typing into search box, etc).
+
 post_search_callback
 --------------------
 This can define or reference a function that will be executed any time new search results are retrieved and presented on the page.
@@ -483,6 +487,7 @@ is missing.
             "resultwrap_end":"</td></tr>",
             "result_box_colours":[],
             "fadein":800,
+            "pre_search_callback": false,
             "post_search_callback": false,
             "post_init_callback": false,
             "pushstate": true,
@@ -1155,6 +1160,10 @@ is missing.
 
         // execute a search
         var dosearch = function() {
+            // if a pre search callback is provided, run it
+            if (typeof options.pre_search_callback == 'function') {
+                options.pre_search_callback.call(this);
+            }
             jQuery('.notify_loading').show();
             // update the options with the latest q value
             if ( options.searchbox_class.length == 0 ) {
