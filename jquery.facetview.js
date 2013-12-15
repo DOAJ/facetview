@@ -1224,7 +1224,6 @@ is missing.
                         sortobj = {}
                         sortobj[sf] = {'order': $('.facetview_order', obj).attr('href')};
                         sorting.push(sortobj);
-                        console.log(sorting);
                     }
                 } else {
                     sortobj = {}
