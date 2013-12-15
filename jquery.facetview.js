@@ -1160,6 +1160,7 @@ is missing.
 
         // execute a search
         var dosearch = function() {
+            options.searching = true; // we are executing a search right now
             // if a pre search callback is provided, run it
             if (typeof options.pre_search_callback == 'function') {
                 options.pre_search_callback.call(this);
@@ -1184,9 +1185,14 @@ is missing.
                 data: {source: qrystr},
                 // processData: false,
                 dataType: options.datatype,
-                success: showresults
+                success: showresults,
+                complete: not_searching
             });
         };
+
+        var not_searching = function(jqXHR, textStatus) {
+            options.searching = false;
+        }
 
         // show search help
         var learnmore = function(event) {
