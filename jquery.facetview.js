@@ -47,7 +47,10 @@
 jQuery.extend({
     getUrlVars: function() {
         var params = new Object;
-        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+        var url = window.location.href;
+        var anchor = url.slice(url.indexOf('#'));
+        url = url.substring(0, url.indexOf('#'));
+        var hashes = url.slice(window.location.href.indexOf('?') + 1).split('&');
         for ( var i = 0; i < hashes.length; i++ ) {
             var hash = hashes[i].split('=');
             if ( hash.length > 1 ) {
@@ -61,6 +64,9 @@ jQuery.extend({
                 }
                 params[hash[0]] = newval;
             }
+        }
+        if (anchor) {
+            params['facetview_url_anchor'] = anchor;
         }
         return params;
     },
@@ -1177,6 +1183,9 @@ is missing.
             // augment the URL bar if possible
             if ( options.pushstate ) {
                 var currurl = '?source=' + options.querystring;
+                if (url_options['facetview_url_anchor']) {
+                    currurl += url_options['facetview_url_anchor'];
+                }
                 window.history.pushState("","search",currurl);
             };
             $.ajax({
