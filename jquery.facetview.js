@@ -48,8 +48,11 @@ jQuery.extend({
     getUrlVars: function() {
         var params = new Object;
         var url = window.location.href;
-        var anchor = url.slice(url.indexOf('#'));
-        url = url.substring(0, url.indexOf('#'));
+        var anchor = undefined;
+        if (url.indexOf("#") > -1) {
+            anchor = url.slice(url.indexOf('#'));
+            url = url.substring(0, url.indexOf('#'));
+        }
         var hashes = url.slice(window.location.href.indexOf('?') + 1).split('&');
         for ( var i = 0; i < hashes.length; i++ ) {
             var hash = hashes[i].split('=');
