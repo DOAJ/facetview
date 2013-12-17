@@ -71,6 +71,8 @@ jQuery.extend({
         if (anchor) {
             params['facetview_url_anchor'] = anchor;
         }
+        
+        alert(JSON.stringify(params))
         return params;
     },
     getUrlVar: function(name){
@@ -514,6 +516,23 @@ is missing.
         // (see bottom of this file)
         var provided_options = $.extend(defaults, options);
         var url_options = $.getUrlVars();
+        
+        // FIXME: horrid, but necessary as quick fix for the paging
+        if (url_options["source"]) {
+            url_options["paging"] = {}
+            if (url_options["source"]["from"]) { 
+                url_options["paging"]["from"] = url_options["source"]["from"] 
+            } else {
+                url_options["paging"]["from"] = defaults.paging.from
+            }
+            if (url_options["source"]["size"]) { 
+                url_options["paging"]["size"] = url_options["source"]["size"] 
+            } else {
+                url_options["paging"]["size"] = defaults.paging.size
+            }
+        }
+        alert(JSON.stringify(url_options))
+        
         $.fn.facetview.options = $.extend(provided_options,url_options);
         var options = $.fn.facetview.options;
 
