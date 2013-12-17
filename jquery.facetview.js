@@ -72,7 +72,7 @@ jQuery.extend({
             params['facetview_url_anchor'] = anchor;
         }
         
-        alert(JSON.stringify(params))
+        //alert(JSON.stringify(params))
         return params;
     },
     getUrlVar: function(name){
@@ -531,7 +531,7 @@ is missing.
                 url_options["paging"]["size"] = defaults.paging.size
             }
         }
-        alert(JSON.stringify(url_options))
+        //alert(JSON.stringify(url_options))
         
         $.fn.facetview.options = $.extend(provided_options,url_options);
         var options = $.fn.facetview.options;
