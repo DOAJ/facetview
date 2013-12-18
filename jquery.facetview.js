@@ -1230,6 +1230,12 @@ is missing.
             event.preventDefault();
             $('#facetview_learnmore', obj).toggle();
         };
+        
+        var startagain = function(event) {
+            event.preventDefault();
+            var base = window.location.href.split("?")[0]
+            window.location.replace(base);
+        }
 
         // adjust how many results are shown
         var howmany = function(event) {
@@ -1386,7 +1392,7 @@ is missing.
         }
         thefacetview += '<div class="facetview_search_options_container">';
         thefacetview += '<div class="btn-group" style="display:inline-block; margin-right:5px;"> \
-            <a class="btn btn-small" title="clear all search settings and start again" href=""><i class="icon-remove"></i></a> \
+            <a class="btn btn-small facetview_startagain" title="clear all search settings and start again" href=""><i class="icon-remove"></i></a> \
             <a class="btn btn-small facetview_learnmore" title="click to view search help information" href="#"><b>?</b></a> \
             <a class="btn btn-small facetview_howmany" title="change result set size" href="#">{{HOW_MANY}}</a>';
         if ( options.search_sortby.length > 0 ) {
@@ -1463,6 +1469,7 @@ is missing.
                 $('.facetview_orderby', obj).bind('change',orderby);
                 $('.facetview_order', obj).bind('click',order);
                 $('.facetview_sharesave', obj).bind('click',sharesave);
+                $(".facetview_startagain", obj).bind("click", startagain)
 
                 // check paging info is available
                 !options.paging.size && options.paging.size != 0 ? options.paging.size = 10 : "";
