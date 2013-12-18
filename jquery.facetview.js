@@ -1393,12 +1393,14 @@ is missing.
         thefacetview += '<div class="facetview_search_options_container">';
         thefacetview += '<div class="btn-group" style="display:inline-block; margin-right:5px;"> \
             <a class="btn btn-small facetview_startagain" title="clear all search settings and start again" href=""><i class="icon-remove"></i></a> \
-            <a class="btn btn-small facetview_learnmore" title="click to view search help information" href="#"><b>?</b></a> \
             <a class="btn btn-small facetview_howmany" title="change result set size" href="#">{{HOW_MANY}}</a>';
         if ( options.search_sortby.length > 0 ) {
             thefacetview += '<a class="btn btn-small facetview_order" title="current order descending. Click to change to ascending" \
                 href="desc"><i class="icon-arrow-down"></i></a>';
-            thefacetview += '</div>';
+        }
+        thefacetview += '<a class="btn btn-small facetview_learnmore" title="click to view search help information" href="#"><b>?</b></a>'
+        thefacetview += '</div>';
+        if ( options.search_sortby.length > 0 ) { // bit of a pain, but this is the required button ordering
             thefacetview += '<select class="facetview_orderby" style="border-radius:5px; \
                 -moz-border-radius:5px; -webkit-border-radius:5px; width:100px; background:#eee; margin:0 5px 21px 0;"> \
                 <option value="">order by</option>';
