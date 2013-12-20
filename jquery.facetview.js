@@ -1137,14 +1137,19 @@ is missing.
                 }
             }
             if (bool) {
+                var qryval = undefined;
                 if ( options.q != "" ) {
-                    var qryval = { 'query': fuzzify(options.q) };
-                    $('.facetview_searchfield', obj).val() != "" ? qryval.default_field = $('.facetview_searchfield', obj).val() : "";
-                    options.default_operator !== undefined ? qryval.default_operator = options.default_operator : false;
-                    bool['must'].push( {'query_string': qryval } );
-                };
+                    qryval = {'query_string' : { 'query': fuzzify(options.q) }};
+                    $('.facetview_searchfield', obj).val() != "" ? qryval.query_string.default_field = $('.facetview_searchfield', obj).val() : "";
+                    options.default_operator !== undefined ? qryval.query_string.default_operator = options.default_operator : false;
+                    // bool['must'].push( {'query_string': qryval } );
+                } else {
+                    qryval = {'match_all': {}};
+                }
                 nested ? bool['must'].push(nested) : "";
-                qs['query'] = {'bool': bool};
+                qs["query"] = {"filtered" : {}}
+                qs.query.filtered["query"] = qryval;
+                qs.query.filtered['filter'] = {'bool': bool};
             } else {
                 if ( options.q != "" ) {
                     var qryval = { 'query': fuzzify(options.q) };
@@ -1183,6 +1188,8 @@ is missing.
                 options.querystring = JSON.stringify(qs)
             }
             options.sharesave_link ? $('.facetview_sharesaveurl', obj).val('http://' + window.location.host + window.location.pathname + '?source=' + options.querystring) : "";
+            
+            // alert(qy)
             return qy;
         };
 
