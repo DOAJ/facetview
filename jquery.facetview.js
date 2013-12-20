@@ -954,10 +954,14 @@ is missing.
             // for each filter setup, find the results for it and append them to the relevant filter
             for ( var each = 0; each < options.facets.length; each++ ) {
                 var facet = options.facets[each]['field'];
+                var size = options.facets[each]["size"] ? options.facets[each]["size"] : 10
                 var facetclean = options.facets[each]['field'].replace(/\./gi,'_').replace(/\:/gi,'_');
                 $('#facetview_' + facetclean, obj).children().find('.facetview_filtervalue').remove();
                 var records = data["facets"][ facet ];
+                var counter = 0
                 for ( var item in records ) {
+                    if (counter >= size) { break; }
+                    counter += 1 // we have requested more records than we want to display (cf facet count bug), so need to cut off
                     var append = '<tr class="facetview_filtervalue" style="display:none;"><td><a class="facetview_filterchoice' +
                         '" rel="' + facet + '" href="' + item + '"><span class="facetview_filterchoice_text">' + item + '</span>' +
                         '<span class="facetview_filterchoice_count"> (' + records[item] + ')</span></a></td></tr>';
@@ -1172,6 +1176,11 @@ is missing.
             for ( var item = 0; item < options.facets.length; item++ ) {
                 var fobj = jQuery.extend(true, {}, options.facets[item] );
                 delete fobj['display'];
+                if (fobj.size) { // add a bunch of extra values to the facets to deal with the shard count issue
+                    fobj.size += 100
+                } else {
+                    fobj.size = 110
+                }
                 var parts = fobj['field'].split('.');
                 qs['facets'][fobj['field']] = {"terms":fobj};
                 if ( options.nested.indexOf(parts[0]) != -1 ) {
