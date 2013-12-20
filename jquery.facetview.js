@@ -1202,6 +1202,7 @@ is missing.
             };
             // make the search query
             var qrystr = elasticsearchquery();
+            // alert(qrystr)
             // augment the URL bar if possible
             if ( options.pushstate ) {
                 var currurl = '?source=' + options.querystring;
@@ -1269,7 +1270,7 @@ is missing.
             var sortchoice = $('.facetview_orderby', obj).val();
             if ( sortchoice.length != 0 ) {
                 var sorting = [];
-                if (sortchoice.startsWith('[')) {
+                if (sortchoice.indexOf('[') === 0) {
                     sort_fields = JSON.parse(sortchoice.replace(/'/g, '"'));
                     for ( var each = 0; each < sort_fields.length; each++ ) {
                         sf = sort_fields[each];
@@ -1285,7 +1286,11 @@ is missing.
 
                 options.sort = sorting;
             } else {
-                options.sort = [];
+                sortobj = {}
+                sortobj["_score"] = {'order': $('.facetview_order', obj).attr('href')};
+                sorting = [sortobj]
+                options.sort = sorting
+                //options.sort = [];
             }
             options.paging.from = 0;
             dosearch();
@@ -1403,7 +1408,7 @@ is missing.
         if ( options.search_sortby.length > 0 ) { // bit of a pain, but this is the required button ordering
             thefacetview += '<select class="facetview_orderby" style="border-radius:5px; \
                 -moz-border-radius:5px; -webkit-border-radius:5px; width:100px; background:#eee; margin:0 5px 21px 0;"> \
-                <option value="">order by</option>';
+                <option value="">order by ... relevance</option>';
             for ( var each = 0; each < options.search_sortby.length; each++ ) {
                 var obj = options.search_sortby[each];
                 var sortoption = '';
