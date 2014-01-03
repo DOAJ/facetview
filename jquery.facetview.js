@@ -329,7 +329,15 @@ This is useful for finer customisation of the facetview interface, e.g. insertin
 
 pushstate
 ---------
-Updates the URL string with the current query when the user changes the search terms
+Updates the URL string with the current query when the user changes the search terms.
+
+NOTE: only works in HTML5 browsers (i.e. ones which support HTML5
+natively, not via shims and add-ons like Internet Explorer 9 and
+earlier).
+
+In HTML4 browsers the URL will simply not change. It is recommended that
+you use facetview's sharesave_link option if you care about your users
+being able to share links to search results.
 
 linkify
 -------
@@ -1220,7 +1228,7 @@ is missing.
             var qrystr = elasticsearchquery();
             // alert(qrystr)
             // augment the URL bar if possible
-            if ( options.pushstate ) {
+            if ( options.pushstate && 'pushState' in window.history ) {
                 var currurl = '?source=' + options.querystring;
                 if (url_options['facetview_url_anchor']) {
                     currurl += url_options['facetview_url_anchor'];
