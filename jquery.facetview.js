@@ -16,6 +16,8 @@
 // first define the bind with delay function from (saves loading it separately) 
 // https://github.com/bgrins/bindWithDelay/blob/master/bindWithDelay.js
 
+var elasticsearch_special_chars = ['(', ')', '{', '}', '[', ']', '^' , ':', '/', '"'];
+
 (function($) {
     $.fn.bindWithDelay = function( type, data, fn, timeout, throttle ) {
         var wait = null;
@@ -1083,6 +1085,20 @@ is missing.
         };
 
         // build the search query URL based on current params
+        var querystr_replacer = function(key, value) {
+            if (key == "query" && typeof(value) == 'string') {
+                for ( var each = 0; each < elasticsearch_special_chars.length; each++ ) {
+                    value = value.replace(elasticsearch_special_chars[each],'\\' + elasticsearch_special_chars[each], 'g');
+                }
+                return value;
+            }
+            return value;
+        };
+
+        var escapeqs = function(qs) {
+            return JSON.stringify(qs, querystr_replacer);
+        };
+
         var elasticsearchquery = function() {
             var qs = {};
             var bool = false;
@@ -1197,12 +1213,12 @@ is missing.
             }
             jQuery.extend(true, qs['facets'], options.extra_facets );
             //alert(JSON.stringify(qs,"","    "));
-            qy = JSON.stringify(qs);
+            qy = escapeqs(qs);
             if ( options.include_facets_in_querystring ) {
                 options.querystring = qy;
             } else {
                 delete qs.facets;
-                options.querystring = JSON.stringify(qs)
+                options.querystring = escapeqs(qs);
             }
             options.sharesave_link ? $('.facetview_sharesaveurl', obj).val('http://' + window.location.host + window.location.pathname + '?source=' + options.querystring) : "";
             
