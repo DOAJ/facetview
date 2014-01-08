@@ -16,7 +16,7 @@
 // first define the bind with delay function from (saves loading it separately) 
 // https://github.com/bgrins/bindWithDelay/blob/master/bindWithDelay.js
 
-var elasticsearch_special_chars = ['(', ')', '{', '}', '[', ']', '^' , ':', '/', '"'];
+var elasticsearch_special_chars = ['(', ')', '{', '}', '[', ']', '^' , ':', '/'];
 
 (function($) {
     $.fn.bindWithDelay = function( type, data, fn, timeout, throttle ) {
