@@ -16,6 +16,8 @@
 // first define the bind with delay function from (saves loading it separately) 
 // https://github.com/bgrins/bindWithDelay/blob/master/bindWithDelay.js
 
+var elasticsearch_special_chars = ['(', ')', '{', '}', '[', ']', '^' , ':', '/'];
+
 (function($) {
     $.fn.bindWithDelay = function( type, data, fn, timeout, throttle ) {
         var wait = null;
@@ -329,7 +331,15 @@ This is useful for finer customisation of the facetview interface, e.g. insertin
 
 pushstate
 ---------
-Updates the URL string with the current query when the user changes the search terms
+Updates the URL string with the current query when the user changes the search terms.
+
+NOTE: only works in HTML5 browsers (i.e. ones which support HTML5
+natively, not via shims and add-ons like Internet Explorer 9 and
+earlier).
+
+In HTML4 browsers the URL will simply not change. It is recommended that
+you use facetview's sharesave_link option if you care about your users
+being able to share links to search results.
 
 linkify
 -------
@@ -519,19 +529,46 @@ is missing.
         
         // FIXME: horrid, but necessary as quick fix for the paging
         if (url_options["source"]) {
-            url_options["paging"] = {}
-            if (url_options["source"]["from"]) { 
-                url_options["paging"]["from"] = url_options["source"]["from"] 
-            } else {
-                url_options["paging"]["from"] = defaults.paging.from
+            // see if there is a from or size parameter in the source.  If so, copy them to 
+            // url_options.paging using the defaults if they are not both present
+            if (url_options["source"]["from"] || url_options["source"]["size"]) {
+                url_options["paging"] = {}
+                if (url_options["source"]["from"]) { 
+                    url_options["paging"]["from"] = url_options["source"]["from"] 
+                } else {
+                    url_options["paging"]["from"] = provided_options.paging.from
+                }
+                if (url_options["source"]["size"]) { 
+                    url_options["paging"]["size"] = url_options["source"]["size"] 
+                } else {
+                    url_options["paging"]["size"] = provided_options.paging.size
+                }
             }
-            if (url_options["source"]["size"]) { 
-                url_options["paging"]["size"] = url_options["source"]["size"] 
-            } else {
-                url_options["paging"]["size"] = defaults.paging.size
+            // extract the sort options if there
+            if (url_options["source"]["sort"]) {
+                url_options["sort"] = url_options["source"]["sort"]
+            }
+            // get hold of the bool query if it is there
+            // and get hold of the query string and default operator if they have been provided
+            if (url_options["source"]["query"]) {
+                var sq = url_options["source"]["query"]
+                if (sq.filtered) {
+                    url_options["bool"] = sq.filtered.filter.bool
+                    
+                    if (sq.filtered.query && sq.filtered.query.query_string) {
+                        url_options["q"] = sq.filtered.query.query_string.query
+                        url_options["default_operator"] = sq.filtered.query.query_string.default_operator
+                    }
+                }
+                // if this was not a filtered query, we may need to look for the query string and
+                // the default operator elsewhere
+                else if (sq.query_string) {
+                    url_options["q"] = sq.query_string.query
+                    url_options["default_operator"] = sq.query_string.default_operator
+                }
             }
         }
-        //alert(JSON.stringify(url_options))
+        // alert(JSON.stringify(url_options))
         
         $.fn.facetview.options = $.extend(provided_options,url_options);
         var options = $.fn.facetview.options;
@@ -572,6 +609,17 @@ is missing.
                 $('.facetview_filterselected[rel="' + $(this).attr('href') + '"]', obj).removeClass('facetview_logic_or');
             }
             dosearch();
+        }
+        
+        var passiveorfilters = function(selector, value) {
+            var el = $(selector)
+            if (value === "OR") {
+                $(el).attr('rel','OR');
+                $(el).css({'color':'#333'});
+            } else if (value === "AND") {
+                $(el).attr('rel','AND');
+                $(el).css({'color':'#aaa'});
+            }
         }
 
         // function to perform for sorting of filters
@@ -756,15 +804,8 @@ is missing.
                 options.description ? $('#facetview_filters', obj).append('<div>' + options.description + '</div>') : "";
             };
         };
-
-        // trigger a search when a filter choice is clicked
-        // or when a source param is found and passed on page load
-        var clickfilterchoice = function(event,rel,href) {
-            if ( event ) {
-                event.preventDefault();
-                var rel = $(this).attr("rel");
-                var href = $(this).attr("href");
-            }
+        
+        var makefilterselected = function(rel, href) {
             var relclean = rel.replace(/\./gi,'_').replace(/\:/gi,'_');
             // Do nothing if element already exists.
             if( $('a.facetview_filterselected[href="'+href+'"][rel="'+rel+'"]').length ){
@@ -788,9 +829,22 @@ is missing.
                 pobj += newobj + '</div>';
                 $('#facetview_selectedfilters', obj).append(pobj);
             };
-
+            
             $('.facetview_filterselected', obj).unbind('click',clearfilter);
             $('.facetview_filterselected', obj).bind('click',clearfilter);
+        }
+        
+        // trigger a search when a filter choice is clicked
+        // or when a source param is found and passed on page load
+        var clickfilterchoice = function(event,rel,href) {
+            if ( event ) {
+                event.preventDefault();
+                var rel = $(this).attr("rel");
+                var href = $(this).attr("href");
+            }
+            
+            makefilterselected(rel, href);
+            
             if ( event ) {
                 options.paging.from = 0;
                 dosearch();
@@ -1075,12 +1129,28 @@ is missing.
         };
 
         // build the search query URL based on current params
+        var querystr_replacer = function(key, value) {
+            if (key == "query" && typeof(value) == 'string') {
+                for ( var each = 0; each < elasticsearch_special_chars.length; each++ ) {
+                    value = value.replace(elasticsearch_special_chars[each],'\\' + elasticsearch_special_chars[each], 'g');
+                }
+                return value;
+            }
+            return value;
+        };
+
+        var escapeqs = function(qs) {
+            return JSON.stringify(qs, querystr_replacer);
+        };
+
         var elasticsearchquery = function() {
             var qs = {};
-            var bool = false;
+            // var bool = false;
+            var bool = options.bool ? options.bool : false
             var nested = false;
             var seenor = []; // track when an or group are found and processed
             $('.facetview_filterselected',obj).each(function() {
+                // FIXME: this will overwrite any existing bool in the options
                 !bool ? bool = {'must': [] } : "";
                 if ( $(this).hasClass('facetview_facetrange') ) {
                     var rngs = {
@@ -1101,7 +1171,8 @@ is missing.
                     // TODO: check if this has class facetview_logic_or
                     // if so, need to build a should around it and its siblings
                     if ( $(this).hasClass('facetview_logic_or') ) {
-                        if ( !($(this).attr('rel') in seenor) ) {
+                        if ( $.inArray($(this).attr("rel"), seenor) === -1 ) {
+                        // if ( !($(this).attr('rel') in seenor) ) {
                             seenor.push($(this).attr('rel'));
                             var bobj = {'bool':{'should':[]}};
                             $('.facetview_filterselected[rel="' + $(this).attr('rel') + '"]').each(function() {
@@ -1111,10 +1182,11 @@ is missing.
                                     bobj.bool.should.push(ob);
                                 };
                             });
-                            if ( bobj.bool.should.length == 1 ) {
-                                var spacer = {'match_all':{}};
-                                bobj.bool.should.push(spacer);
-                            }
+                            // FIXME: this is a bit counter intuitive, may want to take it out
+                            //if ( bobj.bool.should.length == 1 ) {
+                            //    var spacer = {'match_all':{}};
+                            //    bobj.bool.should.push(spacer);
+                            //}
                         }
                     } else {
                         var bobj = {'term':{}};
@@ -1122,15 +1194,18 @@ is missing.
                     }
                     
                     // check if this should be a nested query
-                    var parts = $(this).attr('rel').split('.');
-                    if ( options.nested.indexOf(parts[0]) != -1 ) {
-                        !nested ? nested = {"nested":{"_scope":parts[0],"path":parts[0],"query":{"bool":{"must":[bobj]}}}} : nested.nested.query.bool.must.push(bobj);
-                    } else {
-                        bool['must'].push(bobj);
+                    if (bobj) {
+                        var parts = $(this).attr('rel').split('.');
+                        if ( options.nested.indexOf(parts[0]) != -1 ) {
+                            !nested ? nested = {"nested":{"_scope":parts[0],"path":parts[0],"query":{"bool":{"must":[bobj]}}}} : nested.nested.query.bool.must.push(bobj);
+                        } else {
+                            bool['must'].push(bobj);
+                        }
                     }
                 }
             });
             for (var item in options.predefined_filters) {
+                // FIXME: this may overwrite existing bool option
                 !bool ? bool = {'must': [] } : "";
                 var pobj = options.predefined_filters[item];
                 var parts = item.split('.');
@@ -1189,12 +1264,12 @@ is missing.
             }
             jQuery.extend(true, qs['facets'], options.extra_facets );
             //alert(JSON.stringify(qs,"","    "));
-            qy = JSON.stringify(qs);
+            qy = escapeqs(qs);
             if ( options.include_facets_in_querystring ) {
                 options.querystring = qy;
             } else {
                 delete qs.facets;
-                options.querystring = JSON.stringify(qs)
+                options.querystring = escapeqs(qs);
             }
             options.sharesave_link ? $('.facetview_sharesaveurl', obj).val('http://' + window.location.host + window.location.pathname + '?source=' + options.querystring) : "";
             
@@ -1220,7 +1295,7 @@ is missing.
             var qrystr = elasticsearchquery();
             // alert(qrystr)
             // augment the URL bar if possible
-            if ( options.pushstate ) {
+            if ( options.pushstate && 'pushState' in window.history ) {
                 var currurl = '?source=' + options.querystring;
                 if (url_options['facetview_url_anchor']) {
                     currurl += url_options['facetview_url_anchor'];
@@ -1519,8 +1594,39 @@ is missing.
                 if (typeof options.post_init_callback == 'function') {
                     options.post_init_callback.call(this);
                 }
-
+                
                 options.source || options.initialsearch ? dosearch() : "";
+                
+                // set any selected filter buttons (which also means setting the filter
+                // OR/AND status
+                if (options.bool) {
+                    for (var i = 0; i < options.bool.must.length; i++) {
+                        var must = options.bool.must[i]
+                        var sub = Object.keys(must)[0]
+                        if (sub === "bool") {
+                            // this is an OR query
+                            for (var j = 0; j < must.bool.should.length; j++) {
+                                var should = must.bool.should[j]
+                                var keys = Object.keys(should.term)
+                                if (keys.length === 1) {
+                                    // set the filter status in the menu
+                                    passiveorfilters(".facetview_or[href='" + keys[0] + "']", "OR")
+                                    // create the button
+                                    makefilterselected(keys[0], should.term[keys[0]])
+                                }
+                            }
+                        }
+                        else if (sub === "term") {
+                            var keys = Object.keys(must.term)
+                            if (keys.length === 1) {
+                                makefilterselected(keys[0], must.term[keys[0]])
+                            }
+                        }
+                    }
+                }
+                
+                // unset any original bool request
+                options.bool = false
 
             };
             
