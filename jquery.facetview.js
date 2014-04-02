@@ -890,10 +890,9 @@ is missing.
             resultobj["start"] = "";
             resultobj["found"] = dataobj.hits.total;
             for (var item in dataobj.facets) {
-                var facetsobj = new Object();
-                for (var thing in dataobj.facets[item]["terms"]) {
-                    facetsobj[ dataobj.facets[item]["terms"][thing]["term"] ] = dataobj.facets[item]["terms"][thing]["count"];
-                }
+                // just straight copy the terms from the facet over
+                // FIXME: only handles terms facets
+                var facetsobj = dataobj.facets[item]["terms"]
                 resultobj["facets"][item] = facetsobj;
             }
             return resultobj;
@@ -1013,12 +1012,18 @@ is missing.
                 $('#facetview_' + facetclean, obj).children().find('.facetview_filtervalue').remove();
                 var records = data["facets"][ facet ];
                 var counter = 0
-                for ( var item in records ) {
+                for ( var i in records ) { // iterate through the array in order (facet is sensitive to ordering)
                     if (counter >= size) { break; }
                     counter += 1 // we have requested more records than we want to display (cf facet count bug), so need to cut off
+                    
+                    // extract the interesting data about the facet
+                    var f = records[i]
+                    var term = f.term
+                    var count = f.count
+                    
                     var append = '<tr class="facetview_filtervalue" style="display:none;"><td><a class="facetview_filterchoice' +
-                        '" rel="' + facet + '" href="' + item + '"><span class="facetview_filterchoice_text">' + item + '</span>' +
-                        '<span class="facetview_filterchoice_count"> (' + records[item] + ')</span></a></td></tr>';
+                        '" rel="' + facet + '" href="' + term + '"><span class="facetview_filterchoice_text">' + term + '</span>' +
+                        '<span class="facetview_filterchoice_count"> (' + count + ')</span></a></td></tr>';
                     $('#facetview_' + facetclean, obj).append(append);
                 }
                 if ( $('.facetview_filtershow[rel="' + facetclean + '"]', obj).hasClass('facetview_open') ) {
