@@ -571,6 +571,45 @@ is missing.
         // alert(JSON.stringify(url_options))
         
         $.fn.facetview.options = $.extend(provided_options,url_options);
+
+        // ==== PROCESS THE OPTIONS ====
+
+        // Clean up all array options
+        // IE8 interprets trailing commas as introducing an undefined
+        // object, e.g. ["a", "b", "c",] means ["a", "b", "c", undefined]
+        // in IE8. And maybe in older IE-s. So the user loading
+        // facetview might have put trailing commas in their config, but
+        // this will cause facetview to break in IE8 - so clean up!
+
+        function delete_last_element_of_array_if_undefined(array, recurse) {
+            var recurse = recurse || false;
+            if ($.type(array) == 'array') {
+                // delete the last item if it's undefined
+                if (array.length > 0 && $.type(array[array.length - 1]) == 'undefined') {
+                    array.splice(array.length - 1, 1);
+                }
+            }
+            if (recurse) {
+                for ( var each = 0; each < array.length; each++ ) {
+                    if ($.type(array[each]) == 'array') {
+                        delete_last_element_of_array_if_undefined(array[each], true);
+                    }
+                }
+            }
+        }
+
+        // first see if this clean up is necessary at all
+        var test = ["a", "b", "c", ]  // note trailing comma, will produce ["a", "b", "c", undefined] in IE8 and ["a", "b", "c"] in every sane browser
+        if ($.type(test[test.length - 1]) == 'undefined') {
+            // ok, cleanup is necessary, go
+            for (var key in $.fn.facetview.options) {
+                if ($.fn.facetview.options.hasOwnProperty(key)) {
+                    var option = $.fn.facetview.options[key];
+                    delete_last_element_of_array_if_undefined(option, true);
+                }
+            }
+        }
+
         var options = $.fn.facetview.options;
 
 
